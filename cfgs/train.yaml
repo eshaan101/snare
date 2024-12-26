@@ -27,8 +27,8 @@ data:
   amt_data: '${root_dir}/amt/'
   folds: 'folds_adversarial'
 
-  clip_lang_feats: '${root_dir}/data/langfeat-512-clipViT32.json.gz'
-  clip_img_feats: '${root_dir}/data/shapenet-clipViT32-frames.json.gz'
+  clip_lang_feats: '/content/drive/MyDrive/Research/langfeat-512-clipViT32.json.gz'
+  clip_img_feats: '/content/drive/MyDrive/Research/shapenet-clipViT32-frames.json.gz'
 
 train:
   exps_folder: 'exps'
