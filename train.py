@@ -27,6 +27,11 @@ def main(cfg):
     last_checkpoint = last_checkpoint_path \
         if os.path.exists(last_checkpoint_path) and cfg['train']['load_from_last_ckpt'] else None
 
+    cfg['data']['amt_data'] = '/content/snare/amt'
+    cfg['data']['folds'] = 'folds_adversarial'
+    cfg['data']['clip_lang_feats'] = '/content/drive/MyDrive/Research/langfeat-512-clipViT32.json.gz'
+    cfg['data']['clip_img_feats'] = '/content/drive/MyDrive/Research/shapenet-clipViT32-frames.json.gz'
+
     checkpoint_callback = ModelCheckpoint(
         monitor=cfg['wandb']['saver']['monitor'],
         dirpath=checkpoint_path,
