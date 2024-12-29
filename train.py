@@ -39,11 +39,13 @@ def main(cfg):
         save_top_k=1,
         save_last=True,
     )
+    # Initialize Trainer with GPU settings
     trainer = Trainer(
-        gpus=[0],
+        gpus=1,  # Use 1 GPU
         fast_dev_run=cfg['debug'],
         checkpoint_callback=checkpoint_callback,
         max_epochs=cfg['train']['max_epochs'],
+        progress_bar_refresh_rate=20,  # Avoid Colab crashing
     )
 
     # dataset
@@ -52,7 +54,8 @@ def main(cfg):
     test = CLIPGraspingDataset(cfg, mode='test')
 
     # model
-    model = models.names[cfg['train']['model']](cfg, train, valid)
+    model = models.names[cfg['train']['model']](cfg, train, valid).to('cuda')
+    print(f"Model device: {next(model.parameters()).device}")
 
     # resume epoch and global_steps
     if last_checkpoint and cfg['train']['load_from_last_ckpt']:
