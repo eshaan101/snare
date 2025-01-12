@@ -56,20 +56,20 @@ class CLIPGraspingDataset(torch.utils.data.Dataset):
             with gzip.open(lang_feats_path, 'rt', encoding='utf-8') as f:
                 self.lang_feats = json.load(f)
             print(f"Loaded language features. Total entries: {len(self.lang_feats)}")
-
+    
             # Image features
             img_feats_path = self.cfg['data']['clip_img_feats']
             print(f"Loading image features from: {img_feats_path}")
             with gzip.open(img_feats_path, 'rt', encoding='utf-8') as f:
                 self.img_feats = json.load(f)
             print(f"Loaded image features. Total keys: {len(self.img_feats)}")
-
+    
             # Limit the image features for debugging
-            # Load only a subset for testing
-            self.img_feats = dict(list(self.img_feats.items())[:100])  # Adjust the size if needed
+            self.img_feats = dict(list(self.img_feats.items())[:100])  # Load only 100 entries for debugging
             print(f"Using subset of image features. Total keys: {len(self.img_feats)}")
         else:
             raise NotImplementedError("Unsupported feats_backbone. Expected 'clip'.")
+
 
     def __len__(self):
         return len(self.data)
