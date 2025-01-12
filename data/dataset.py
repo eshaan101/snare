@@ -48,28 +48,28 @@ class CLIPGraspingDataset(torch.utils.data.Dataset):
         print(f"Loaded total entries. {self.mode}: {len(self.data)} entries")
 
     def load_extracted_features(self):
-    print("Loading extracted features...")
-    if self.feats_backbone == "clip":
-        # Language features
-        lang_feats_path = self.cfg['data']['clip_lang_feats']
-        print(f"Loading language features from: {lang_feats_path}")
-        with gzip.open(lang_feats_path, 'rt', encoding='utf-8') as f:
-            self.lang_feats = json.load(f)
-        print(f"Loaded language features. Total entries: {len(self.lang_feats)}")
+        print("Loading extracted features...")
+        if self.feats_backbone == "clip":
+            # Language features
+            lang_feats_path = self.cfg['data']['clip_lang_feats']
+            print(f"Loading language features from: {lang_feats_path}")
+            with gzip.open(lang_feats_path, 'rt', encoding='utf-8') as f:
+                self.lang_feats = json.load(f)
+            print(f"Loaded language features. Total entries: {len(self.lang_feats)}")
 
-        # Image features
-        img_feats_path = self.cfg['data']['clip_img_feats']
-        print(f"Loading image features from: {img_feats_path}")
-        with gzip.open(img_feats_path, 'rt', encoding='utf-8') as f:
-            self.img_feats = json.load(f)
-        print(f"Loaded image features. Total keys: {len(self.img_feats)}")
+            # Image features
+            img_feats_path = self.cfg['data']['clip_img_feats']
+            print(f"Loading image features from: {img_feats_path}")
+            with gzip.open(img_feats_path, 'rt', encoding='utf-8') as f:
+                self.img_feats = json.load(f)
+            print(f"Loaded image features. Total keys: {len(self.img_feats)}")
 
-        # Limit the image features for debugging
-        # Load only a subset for testing
-        self.img_feats = dict(list(self.img_feats.items())[:100])  # Adjust the size if needed
-        print(f"Using subset of image features. Total keys: {len(self.img_feats)}")
-    else:
-        raise NotImplementedError("Unsupported feats_backbone. Expected 'clip'.")
+            # Limit the image features for debugging
+            # Load only a subset for testing
+            self.img_feats = dict(list(self.img_feats.items())[:100])  # Adjust the size if needed
+            print(f"Using subset of image features. Total keys: {len(self.img_feats)}")
+        else:
+            raise NotImplementedError("Unsupported feats_backbone. Expected 'clip'.")
 
     def __len__(self):
         return len(self.data)
