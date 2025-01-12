@@ -56,9 +56,11 @@ def main(cfg):
     train = CLIPGraspingDataset(cfg, mode='train')
     print(f"Loaded training dataset with {len(train)} entries.")
 
+    print("Initializing CLIPGraspingDataset for validation...")
     valid = CLIPGraspingDataset(cfg, mode='valid')
     print(f"Loaded validation dataset with {len(valid)} entries.")
 
+    print("Initializing CLIPGraspingDataset for testing...")
     test = CLIPGraspingDataset(cfg, mode='test')
     print(f"Loaded test dataset with {len(test)} entries.")
 
@@ -67,9 +69,11 @@ def main(cfg):
     train_loader = DataLoader(train, batch_size=cfg['train']['batch_size'], pin_memory=True)
     print("Training DataLoader initialized.")
 
+    print("Initializing Validation DataLoader...")
     valid_loader = DataLoader(valid, batch_size=cfg['train']['batch_size'], pin_memory=True)
     print("Validation DataLoader initialized.")
 
+    print("Initializing Test DataLoader...")
     test_loader = DataLoader(test, batch_size=cfg['train']['batch_size'], pin_memory=True)
     print("Test DataLoader initialized.")
 
