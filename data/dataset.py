@@ -2,10 +2,8 @@ import os
 import json
 import torch
 import torch.utils.data
-
 import numpy as np
 import gzip
-import json
 
 class CLIPGraspingDataset(torch.utils.data.Dataset):
 
@@ -16,45 +14,55 @@ class CLIPGraspingDataset(torch.utils.data.Dataset):
         self.folds = os.path.join(self.cfg['data']['amt_data'], self.cfg['data']['folds'])
         self.feats_backbone = self.cfg['train']['feats_backbone']
 
+        print(f"Initializing CLIPGraspingDataset in {self.mode} mode.")
         self.load_entries()
         self.load_extracted_features()
+        print(f"Dataset initialization complete for {self.mode} mode.")
 
     def load_entries(self):
+        print("Loading entries in CLIPGraspingDataset...")
         train_train_files = ["train.json"]
         train_val_files = ["val.json"]
         test_test_files = ["test.json"]
 
-        # modes
+        # Modes
         if self.mode == "train":
             self.files = train_train_files
-        elif self.mode  == 'valid':
+        elif self.mode == "valid":
             self.files = train_val_files
         elif self.mode == "test":
-            self.files =  test_test_files
+            self.files = test_test_files
         else:
-            raise RuntimeError('mode not recognized, should be train, valid or test: ' + str(self.mode))
-
-        # load amt data
+            raise RuntimeError('Mode not recognized, should be train, valid or test: ' + str(self.mode))
+        
+        # Load AMT data
         self.data = []
         for file in self.files:
             fname_rel = os.path.join(self.folds, file)
-            print(fname_rel)
+            print(f"Loading file: {fname_rel}")
             with open(fname_rel, 'r') as f:
-                self.data = self.data + json.load(f)
+                entries = json.load(f)
+                print(f"Loaded {len(entries)} entries from {file}")
+                self.data += entries
 
-        print(f"Loaded Entries. {self.mode}: {len(self.data)} entries")
+        print(f"Loaded total entries. {self.mode}: {len(self.data)} entries")
 
     def load_extracted_features(self):
+        print("Loading extracted features...")
         if self.feats_backbone == "clip":
             lang_feats_path = self.cfg['data']['clip_lang_feats']
+            print(f"Loading language features from: {lang_feats_path}")
             with gzip.open(lang_feats_path, 'r') as f:
                 self.lang_feats = json.load(f)
+            print(f"Loaded language features. Total entries: {len(self.lang_feats)}")
 
             img_feats_path = self.cfg['data']['clip_img_feats']
+            print(f"Loading image features from: {img_feats_path}")
             with gzip.open(img_feats_path, 'r') as f:
                 self.img_feats = json.load(f)
+            print(f"Loaded image features. Total keys: {len(self.img_feats)}")
         else:
-            raise NotImplementedError()
+            raise NotImplementedError("Unsupported feats_backbone. Expected 'clip'.")
 
     def __len__(self):
         return len(self.data)
@@ -62,19 +70,19 @@ class CLIPGraspingDataset(torch.utils.data.Dataset):
     def get_img_feats(self, key):
         feats = []
         for i in range(self.total_views):
-            feat = np.array(self.img_feats[f'{key}-{i}'])
+            feat_key = f'{key}-{i}'
+            feat = np.array(self.img_feats[feat_key])
             feats.append(feat)
         return np.array(feats)
 
     def __getitem__(self, idx):
+        print(f"Fetching item at index {idx}...")
         entry = self.data[idx]
 
-        # get keys
-        entry_idx = entry['ans'] if 'ans' in entry else -1 # test set does not contain answers
+        # Get keys
+        entry_idx = entry['ans'] if 'ans' in entry else -1  # Test set does not contain answers
         if len(entry['objects']) == 2:
             key1, key2 = entry['objects']
-
-        # fix missing key in pair
         else:
             key1 = entry['objects'][entry_idx]
             while True:
@@ -82,20 +90,20 @@ class CLIPGraspingDataset(torch.utils.data.Dataset):
                 if key2 != key1:
                     break
 
-        # annotation
+        # Annotation and features
         annotation = entry['annotation']
-        is_visual = entry['visual'] if 'ans' in entry else -1 # test set does not have labels for visual and non-visual categories
+        is_visual = entry['visual'] if 'ans' in entry else -1  # Test set does not have labels
 
-        # feats
-        start_idx = 6 # discard first 6 views that are top and bottom viewpoints
+        # Feats
+        start_idx = 6  # Discard first 6 views
         img1_n_feats = torch.from_numpy(self.get_img_feats(key1))[start_idx:]
         img2_n_feats = torch.from_numpy(self.get_img_feats(key2))[start_idx:]
         lang_feats = torch.from_numpy(np.array(self.lang_feats[annotation]))
 
-
-        # label
+        # Label
         ans = entry_idx
 
+        print(f"Successfully fetched item at index {idx}.")
         return (
             (img1_n_feats, img2_n_feats),
             lang_feats,
