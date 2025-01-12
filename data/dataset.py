@@ -24,7 +24,7 @@ class CLIPGraspingDataset(torch.utils.data.Dataset):
         train_train_files = ["train.json"]
         train_val_files = ["val.json"]
         test_test_files = ["test.json"]
-
+    
         # Modes
         if self.mode == "train":
             self.files = train_train_files
@@ -44,8 +44,12 @@ class CLIPGraspingDataset(torch.utils.data.Dataset):
                 entries = json.load(f)
                 print(f"Loaded {len(entries)} entries from {file}")
                 self.data += entries
+    
+        # Apply global subsetting for debugging
+        max_entries = 100  # Limit dataset size to 100 entries
+        self.data = self.data[:max_entries]
+        print(f"Using subset of data. {self.mode}: {len(self.data)} entries")
 
-        print(f"Loaded total entries. {self.mode}: {len(self.data)} entries")
 
     def load_extracted_features(self):
         print("Loading extracted features...")
