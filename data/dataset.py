@@ -64,11 +64,13 @@ class CLIPGraspingDataset(torch.utils.data.Dataset):
                 self.img_feats = json.load(f)
             print(f"Loaded image features. Total keys: {len(self.img_feats)}")
     
-            # Limit the image features for debugging
-            self.img_feats = dict(list(self.img_feats.items())[:100])  # Load only 100 entries for debugging
+            # Apply subsetting for debugging
+            subset_size = 100
+            self.img_feats = dict(list(self.img_feats.items())[:subset_size])
             print(f"Using subset of image features. Total keys: {len(self.img_feats)}")
         else:
             raise NotImplementedError("Unsupported feats_backbone. Expected 'clip'.")
+
 
 
     def __len__(self):
