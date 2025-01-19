@@ -35,14 +35,30 @@ def main(cfg):
     cfg['data']['clip_img_feats'] = '/content/drive/MyDrive/Research/shapenet-clipViT32-frames.json.gz'
     print("Configuration paths set.")
 
-    # Detect available accelerator
-    accelerator = "cuda" if torch.cuda.is_available() else "cpu"
-    devices = 1 if torch.cuda.is_available() else "auto"
+    # Detect available accelerator and force GPU usage if available
+    if torch.cuda.is_available():
+        accelerator = "cuda"
+        devices = torch.cuda.device_count()  # Use all available GPUs
+        strategy = "ddp_find_unused_parameters_false" if devices > 1 else "auto"
+        print(f"Using GPU with {devices} devices")
+    else:
+        accelerator = "cpu"
+        devices = "auto"
+        strategy = None
+        print("CUDA not available. Using CPU.")
+
+    # Print device details for debugging
+    print(f"PyTorch CUDA Available: {torch.cuda.is_available()}")
+    print(f"Number of GPUs: {torch.cuda.device_count()}")
+    if torch.cuda.is_available():
+        for i in range(torch.cuda.device_count()):
+            print(f"GPU {i}: {torch.cuda.get_device_name(i)}")
 
     # Initialize Trainer with updated settings
     trainer = Trainer(
         accelerator=accelerator,  # Automatically selects "cuda" or "cpu"
-        devices=devices,  # Uses GPU if available, otherwise CPU
+        devices=devices,  # Use all available GPUs
+        strategy=strategy,  # Use DDP for multi-GPU training
         fast_dev_run=cfg['debug'],  # Debug mode
         callbacks=[ModelCheckpoint(
             monitor=cfg['wandb']['saver']['monitor'],
@@ -52,7 +68,7 @@ def main(cfg):
             save_last=True,
         )],
         max_epochs=cfg['train']['max_epochs'],
-        enable_progress_bar=True,  # Use new progress bar setting
+        enable_progress_bar=True,  # New progress bar handling
     )
     print(f"Trainer initialized with accelerator: {accelerator}, devices: {devices}")
 
@@ -71,7 +87,7 @@ def main(cfg):
 
     # DataLoader Initialization
     print("Initializing DataLoaders...")
-    train_loader = DataLoader(train, batch_size=cfg['train']['batch_size'], pin_memory=True)
+    train_loader = DataLoader(train, batch_size=cfg['train']['batch_size'], pin_memory=True, shuffle=True)
     print("Training DataLoader initialized.")
 
     print("Initializing Validation DataLoader...")
@@ -84,8 +100,13 @@ def main(cfg):
 
     # Model Initialization
     print("Initializing model...")
-    model = models.names[cfg['train']['model']](cfg, train, valid).to(accelerator)
-    print(f"Model is on device: {next(model.parameters()).device}")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = models.names[cfg['train']['model']](cfg, train, valid).to(device)
+    print(f"Model is on device: {device}")
+
+    # Print GPU memory status
+    print(f"GPU memory allocated: {torch.cuda.memory_allocated() / 1024**3:.2f} GB")
+    print(f"GPU memory cached: {torch.cuda.memory_reserved() / 1024**3:.2f} GB")
 
     # Resume from checkpoint if available
     if last_checkpoint and cfg['train']['load_from_last_ckpt']:
