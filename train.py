@@ -37,17 +37,18 @@ def main(cfg):
 
     # Initialize Trainer with GPU settings
     trainer = Trainer(
-        gpus=1,  # Use 1 GPU
+        accelerator="gpu",  # Use GPU instead of deprecated gpus argument
+        devices=1,  # Specify number of GPUs
         fast_dev_run=cfg['debug'],  # Debug mode
-        checkpoint_callback=ModelCheckpoint(
+        callbacks=[ModelCheckpoint(
             monitor=cfg['wandb']['saver']['monitor'],
             dirpath=checkpoint_path,
             filename='{epoch:04d}-{val_acc:.5f}',
             save_top_k=1,
             save_last=True,
-        ),
+        )],
         max_epochs=cfg['train']['max_epochs'],
-        progress_bar_refresh_rate=20,  # Avoid Colab crashing
+        enable_progress_bar=True,  # Use new progress bar setting
     )
     print("Trainer initialized.")
 
@@ -106,6 +107,7 @@ def main(cfg):
         ckpt_path='best'
     )
     print("Testing completed!")
+
 
 if __name__ == "__main__":
     main()
