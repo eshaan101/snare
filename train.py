@@ -35,10 +35,14 @@ def main(cfg):
     cfg['data']['clip_img_feats'] = '/content/drive/MyDrive/Research/shapenet-clipViT32-frames.json.gz'
     print("Configuration paths set.")
 
-    # Initialize Trainer with GPU settings
+    # Detect available accelerator
+    accelerator = "cuda" if torch.cuda.is_available() else "cpu"
+    devices = 1 if torch.cuda.is_available() else "auto"
+
+    # Initialize Trainer with updated settings
     trainer = Trainer(
-        accelerator="gpu",  # Use GPU instead of deprecated gpus argument
-        devices=1,  # Specify number of GPUs
+        accelerator=accelerator,  # Automatically selects "cuda" or "cpu"
+        devices=devices,  # Uses GPU if available, otherwise CPU
         fast_dev_run=cfg['debug'],  # Debug mode
         callbacks=[ModelCheckpoint(
             monitor=cfg['wandb']['saver']['monitor'],
@@ -50,7 +54,7 @@ def main(cfg):
         max_epochs=cfg['train']['max_epochs'],
         enable_progress_bar=True,  # Use new progress bar setting
     )
-    print("Trainer initialized.")
+    print(f"Trainer initialized with accelerator: {accelerator}, devices: {devices}")
 
     # Dataset Initialization
     print("Loading datasets...")
@@ -80,7 +84,7 @@ def main(cfg):
 
     # Model Initialization
     print("Initializing model...")
-    model = models.names[cfg['train']['model']](cfg, train, valid).to('cuda')
+    model = models.names[cfg['train']['model']](cfg, train, valid).to(accelerator)
     print(f"Model is on device: {next(model.parameters()).device}")
 
     # Resume from checkpoint if available
